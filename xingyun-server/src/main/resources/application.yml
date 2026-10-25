@@ -1,0 +1,96 @@
+# SpringBoot 主配置文件（公共部分）
+# 通过 spring.profiles.active 切换环境（dev / prod）
+server:
+  port: 8080
+  servlet:
+    context-path: /api # 所有接口统一前缀 /api，前端请求 baseURL 也要带 /api
+  # 优雅停机：收到停止信号后先处理完在途请求，避免容器滚动发布时请求被硬中断
+  shutdown: graceful
+  # 反向代理（Nginx）场景下正确还原客户端协议/端口/IP
+  forward-headers-strategy: framework
+  # 错误响应不向客户端泄露堆栈、异常类与内部提示
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-exception: false
+  compression:
+    enabled: true
+    mime-types: application/json,application/javascript,text/css,text/html,text/plain,image/svg+xml
+    min-response-size: 1024
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    max-connections: 8192
+    accept-count: 100
+
+spring:
+  profiles:
+    active: dev # 默认开发环境；上线时改为 prod
+  application:
+    name: xingyun-server
+  # 与 server.shutdown=graceful 配套，给在途请求留出完成时间
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  # 文件上传大小限制（视频较大需调大，默认限制过小会上传失败）
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 520MB
+  # Jackson 全局时间格式，避免时区差 8 小时
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+# MyBatis Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.xingyun.entity
+  configuration:
+    map-underscore-to-camel-case: true # 下划线列名自动映射驼峰属性
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto # 主键自增
+      logic-delete-field: isDeleted # 全局逻辑删除字段
+      logic-delete-value: 1 # 已删除值
+      logic-not-delete-value: 0 # 未删除值
+
+# 项目自定义配置（JWT、上传路径等）
+xingyun:
+  jwt:
+    # HMAC 密钥：默认值仅供本地开发，生产环境务必通过环境变量 XINGYUN_JWT_SECRET 覆盖，
+    # 避免密钥硬编码泄露（可在 IDEA 运行配置或系统环境变量中设置）。
+    secret: ${XINGYUN_JWT_SECRET:XingYunEduPlatformSecretKey20260912PleaseChangeInProduction}
+    # token 有效期（毫秒），当前 24 小时
+    expire: 86400000
+    header: Authorization
+  upload:
+    # 本机文件存储根目录（统一放 F 盘项目内，不占 C 盘；生产可通过 XINGYUN_UPLOAD_PATH 覆盖）
+    path: ${XINGYUN_UPLOAD_PATH:F:/AI_full-stack_project/XingYun/xingyun-server/upload}
+    # 访问该目录的 URL 前缀
+    url-prefix: /upload
+  cors:
+    # 跨域白名单（逗号分隔），生产务必替换为真实前端域名，禁止使用 *
+    allowed-origins: ${XINGYUN_CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+
+# 健康检查：生产部署用于探活（K8s/负载均衡/Nginx 均可调用 /api/actuator/health）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
+
+# 日志格式统一携带链路追踪 ID（由 AccessLogFilter 写入 MDC）
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId:-}] %logger{36} - %msg%n"

@@ -1,0 +1,34 @@
+# 开发环境配置（dev）：连接本机 phpStudy 的 MySQL 与 Redis
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # serverTimezone=Asia/Shanghai 解决时区报错；useSSL=false 本地不强制证书
+    # 注意：JDBC 的 characterEncoding 只能写 Java 字符集名 UTF-8；utf8mb4 是库表字符集，写在这里会报错
+    url: jdbc:mysql://localhost:3306/xingyun?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    # Hikari 是 SpringBoot 默认连接池（性能好、零额外配置）
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      connection-timeout: 30000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# 开发环境打印 SQL，便于调试；上线请关闭
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.xingyun: debug

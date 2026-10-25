@@ -1,0 +1,58 @@
+# 生产环境配置（prod）
+# 所有敏感信息一律通过环境变量注入，不落库、不提交真实密码；
+# 必填项缺失时应用启动失败（fail-fast），避免带着默认密钥上线。
+# 启动方式：java -jar xingyun-server.jar --spring.profiles.active=prod
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${XINGYUN_DB_URL:jdbc:mysql://127.0.0.1:3306/xingyun?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=true&requireSSL=false}
+    username: ${XINGYUN_DB_USERNAME}
+    password: ${XINGYUN_DB_PASSWORD}
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 30
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: XingYunHikariPool
+  data:
+    redis:
+      host: ${XINGYUN_REDIS_HOST:127.0.0.1}
+      port: ${XINGYUN_REDIS_PORT:6379}
+      database: ${XINGYUN_REDIS_DB:0}
+      password: ${XINGYUN_REDIS_PASSWORD:}
+      timeout: 5000
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+xingyun:
+  jwt:
+    # 生产环境必须显式提供 32 字节以上的强密钥，未配置则启动即失败
+    secret: ${XINGYUN_JWT_SECRET}
+    expire: ${XINGYUN_JWT_EXPIRE:86400000}
+    header: Authorization
+  upload:
+    path: ${XINGYUN_UPLOAD_PATH}
+    url-prefix: /upload
+  cors:
+    allowed-origins: ${XINGYUN_CORS_ORIGINS}
+
+# 生产环境关闭 SQL 日志，减少 IO 与敏感信息泄露
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+logging:
+  level:
+    root: info
+    com.xingyun: info
+  file:
+    name: ${XINGYUN_LOG_PATH:./logs}/xingyun-server.log
+  logback:
+    rollingpolicy:
+      max-file-size: 50MB
+      max-history: 30
+      total-size-cap: 2GB

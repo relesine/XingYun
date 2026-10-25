@@ -1,0 +1,37 @@
+# =====================================================================
+# XingYun 星云在线教育平台 · 根目录 .gitignore（v1.2 新增）
+# 规范仓库提交内容：忽略构建产物、依赖、上传文件、日志与IDE配置
+# =====================================================================
+
+# ---- Java / Maven 构建产物 ----
+xingyun-server/target/
+*.class
+*.jar
+*.war
+
+# ---- 前端依赖与构建产物 ----
+xingyun-ui/node_modules/
+xingyun-ui/dist/
+xingyun-ui/dev.log
+xingyun-ui/npm-install.log
+
+# ---- 上传文件（本机存储，不入库）----
+xingyun-server/upload/
+
+# ---- 日志与临时文件 ----
+*.log
+gen.txt
+tmpgen/
+test-result.txt
+test-result-v1.1.txt
+
+# ---- IDE / 系统文件 ----
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ---- 环境变量（若新增本地密钥配置）----
+*.local.yml
+.env.local
